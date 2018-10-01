@@ -47,6 +47,7 @@ treeNode :: treeNode(string c, int p)
 	code = "";
 }
 
+
 class linkedList
 {
 	public:
@@ -68,7 +69,7 @@ linkedList :: linkedList()
 treeNode* linkedList :: findSpot(treeNode *newNode)
 {
 	treeNode* spot = this->listHead;
-	while(spot->next !== NULL)
+	while(spot->next != NULL)
 	{
 		if(spot->next != NULL and spot->next->prob < newNode->prob)
 			spot = spot->next;
@@ -83,6 +84,86 @@ void linkedList :: insertOneNode(treeNode *spot, treeNode *newNode)
 	newNode->next = spot->next;
 	spot->next = newNode;
 }
+
+string linkedList :: printList()
+{
+	string line = "listHead --> ";
+	treeNode* ptr = this->listHead;
+	while(ptr->next != NULL)
+	{
+		line += "(\"";
+		line += ptr->chStr;
+		line += "\", ";
+		line += std::to_string(ptr->prob);
+		line += ", \"";
+		line += ptr->next->chStr;
+		line += "\") -- > ";
+		ptr = ptr->next;
+	}
+	line += "(\"";
+	line += ptr->chStr;
+	line += "\", ";
+	line += std::to_string(ptr->prob);
+	line += ", NULL) --> NULL\n";
+
+	return line;
+}
+
+
+class HuffmanBinaryTree
+{
+	public:
+		treeNode* Root;
+		HuffmanBinaryTree();
+		HuffmanBinaryTree(treeNode *);
+		
+		linkedList constructHuffmanLList(string);
+		void constructHuffmanBinTree(linkedList *, string);
+
+		// Pre, Post, In-order methods should be here
+		// if it's necessary
+};
+
+HuffmanBinaryTree :: HuffmanBinaryTree()
+{
+	Root = new treeNode();
+}
+
+HuffmanBinaryTree :: HuffmanBinaryTree(treeNode *listHead)
+{
+	Root = listHead;
+}
+
+linkedList HuffmanBinaryTree :: constructHuffmanLList(string output_file_name)
+{
+	linkedList L;
+
+	for(int i = 0; i < 256; i++)
+	{
+		if(charCounts[i] > 0)
+		{
+			treeNode* temp = new treeNode((char)i, charCounts[i]);
+			L.insertOneNode(L.findSpot(temp), temp);
+		}
+	}
+
+	// Root -> listHead
+	this->Root = L.listHead;
+
+	print_append(L.printList(), output_file_name);
+
+	return L;
+}
+
+void HuffmanBinaryTree :: constructHuffmanBinTree(linkedList *L, string output_file_name)
+{
+	
+}
+
+
+
+
+
 
 
 // Functions
@@ -126,6 +207,20 @@ void computeCount(string Input_File_Name)
 	return;
 }
 
+bool isLeaf(treeNode *node)
+{
+	if(node->left == NULL and node->right == NULL)
+		return true;
+	else
+		return false;
+}
+
+void print_append(string content, string file_name)
+{
+	ofstream outFile(file_name, fstream::app);
+	outFile << content;
+	outFile.close();
+}
 
 
 // argv[1]: An English text file to compute char-prob pairs.
