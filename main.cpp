@@ -6,10 +6,10 @@ using namespace std;
 
 // Global variables.
 int charCounts[256] = {0};
-int charCode[256] = {0};
+string charCode[256] = {""};
 
 // Declearations
-
+void print_append(string, string);
 
 
 // Classes
@@ -134,6 +134,7 @@ HuffmanBinaryTree :: HuffmanBinaryTree(treeNode *listHead)
 	Root = listHead;
 }
 
+// Constructing an ordered linked list without concatenation
 linkedList HuffmanBinaryTree :: constructHuffmanLList(string output_file_name)
 {
 	linkedList L;
@@ -142,7 +143,9 @@ linkedList HuffmanBinaryTree :: constructHuffmanLList(string output_file_name)
 	{
 		if(charCounts[i] > 0)
 		{
-			treeNode* temp = new treeNode((char)i, charCounts[i]);
+			string s(1, (char)i);
+			// Adding code if needs new lines as a character
+			treeNode* temp = new treeNode(s, charCounts[i]);
 			L.insertOneNode(L.findSpot(temp), temp);
 		}
 	}
@@ -150,6 +153,7 @@ linkedList HuffmanBinaryTree :: constructHuffmanLList(string output_file_name)
 	// Root -> listHead
 	this->Root = L.listHead;
 
+	print_append("\n", output_file_name);
 	print_append(L.printList(), output_file_name);
 
 	return L;
@@ -157,8 +161,42 @@ linkedList HuffmanBinaryTree :: constructHuffmanLList(string output_file_name)
 
 void HuffmanBinaryTree :: constructHuffmanBinTree(linkedList *L, string output_file_name)
 {
-	
+	string new_chStr;
+	int new_prob = 0;
+
+	while(L->listHead->next->next != NULL)
+	{
+		// Concatenating characters
+		new_chStr = L->listHead->next->chStr;
+		new_chStr += L->listHead->next->next->chStr;
+
+		// Summing probabilities up
+		new_prob = L->listHead->next->prob;
+		new_prob += L->listHead->next->next->prob;
+
+		// Creating new node
+		treeNode* new_node = new treeNode(new_chStr, new_prob);
+
+		// Pointing the new node's left and right to its original nodes
+		new_node->left = L->listHead->next;
+		new_node->right = L->listHead->next->next;
+
+		// Inserting new node
+		L->insertOneNode(L->findSpot(new_node), new_node);
+
+		// Shifting the linked list head to the next one
+		L->listHead->next = L->listHead->next->next->next;
+
+		// Printing out the current linked list to the ouput file
+		print_append("\n", output_file_name);
+		print_append(L->printList(), output_file_name);
+	}
+
+	// Renewing the Root
+	this->Root = L->listHead->next;
 }
+
+
 
 
 
@@ -175,9 +213,11 @@ void printAry(string Output_File_Name)
 		if(charCounts[i] > 0)
 		{
 			if(i == 10)
-				outFile << "LF" << "\t" << charCounts[i] << endl;
+				continue;
+//				outFile << "LF" << "\t" << charCounts[i] << endl;
 			else if(i == 13)
-				outFile << "CR" << "\t" << charCounts[i] << endl;
+				continue;
+//				outFile << "CR" << "\t" << charCounts[i] << endl;
 			else
 				outFile << (char)i << "\t" << charCounts[i] << endl;
 		}
@@ -200,7 +240,8 @@ void computeCount(string Input_File_Name)
 	while(inFile >> noskipws >> charIn)
 	{
 		index = (int)charIn;
-		charCounts[index]++;
+		if(index != 10 and index != 13)
+			charCounts[index]++;
 	}
 
 	inFile.close();
@@ -222,6 +263,34 @@ void print_append(string content, string file_name)
 	outFile.close();
 }
 
+// Outputting Huffman code to charCode[]
+void getCode(treeNode *T, string code, string output_file_name)
+{
+	if(isLeaf(T))
+	{
+		T->code = code;
+		// Writing code to charCode[]
+		char indexChar = (char)T->chStr.at(0);
+		charCode[(int)indexChar] = code;
+		// Writing <char code> pair to output file
+		string line = T->chStr + "\t" + T->code + "\n";
+		print_append(line, output_file_name);
+	}
+	else
+	{
+		// Go to its both left and right child if it has
+		if(T->left != NULL)
+		{
+			string newCode_left = code + "0";
+			getCode(T->left, newCode_left, output_file_name);
+		}
+		if(T->right != NULL)
+		{
+			string newCode_right = code + "1";
+			getCode(T->right, newCode_right, output_file_name);
+		}
+	}
+}
 
 // argv[1]: An English text file to compute char-prob pairs.
 // argv[2]: An English text file for encoding
@@ -235,6 +304,18 @@ int main(int argc, char** argv)
 	computeCount(argv[1]);
 	printAry(argv[6]);
 
-	
+	HuffmanBinaryTree T;
+	linkedList temp = T.constructHuffmanLList(argv[6]);
+	T.constructHuffmanBinTree(&temp, argv[6]);
+
+	// Cleaning up everything in <char code> file first
+	ofstream char_code(argv[3], ifstream::trunc);
+	char_code.close();
+	string fakeCode;
+	getCode(T.Root, fakeCode, argv[3]);
+
+	// Encoding file
+
+
 	return 0;
 }
