@@ -261,6 +261,7 @@ void print_append(string content, string file_name)
 	ofstream outFile(file_name, fstream::app);
 	outFile << content;
 	outFile.close();
+	return;
 }
 
 // Outputting Huffman code to charCode[]
@@ -290,6 +291,31 @@ void getCode(treeNode *T, string code, string output_file_name)
 			getCode(T->right, newCode_right, output_file_name);
 		}
 	}
+	return;
+}
+
+void Encode(string input_file_name, string output_file_name)
+{
+	char charIn;
+	int index;
+	string code;
+
+	ifstream inFile;
+	inFile.open(input_file_name);
+	ofstream outFile(output_file_name);
+
+	while(inFile >> charIn)
+	{
+		index = (int)charIn;
+		if(index >= 0 and index <256)	// The ascii must be valid
+			if(charCounts[index] > 0)	// The character must have Huffman Code
+				if(index != 10 and index != 13)	// Avoiding special cases: LF and CR
+					code = charCode[index];
+					outFile << code;
+	}
+	inFile.close();
+	outFile.close();
+	return;
 }
 
 // argv[1]: An English text file to compute char-prob pairs.
@@ -315,7 +341,12 @@ int main(int argc, char** argv)
 	getCode(T.Root, fakeCode, argv[3]);
 
 	// Encoding file
+	Encode(argv[2], argv[4]);
 
+	// Decoding file
+	string decode_file_name;
+	cout << "Please enter the file name which needs to be decoded:" << endl;
+	cin >> decode_file_name;
 
 	return 0;
 }
