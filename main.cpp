@@ -11,7 +11,6 @@ string charCode[256] = {""};
 // Declearations
 void print_append(string, string);
 
-
 // Classes
 class treeNode
 {
@@ -47,6 +46,8 @@ treeNode :: treeNode(string c, int p)
 	code = "";
 }
 
+// Declearation
+bool isLeaf(treeNode *);
 
 class linkedList
 {
@@ -120,6 +121,7 @@ class HuffmanBinaryTree
 		linkedList constructHuffmanLList(string);
 		void constructHuffmanBinTree(linkedList *, string);
 
+		void Decode(string, string);
 		// Pre, Post, In-order methods should be here
 		// if it's necessary
 };
@@ -196,12 +198,54 @@ void HuffmanBinaryTree :: constructHuffmanBinTree(linkedList *L, string output_f
 	this->Root = L->listHead->next;
 }
 
+void HuffmanBinaryTree :: Decode(string input_file_name, string output_file_name)
+{
+	ifstream inFile;
+	inFile.open(input_file_name);
+	ofstream outFile(output_file_name);
+	
+	char charIn;
+	treeNode* ptr = this->Root;
 
+	while(inFile >> charIn)
+	{
+		if(charIn == '0')
+		{
+			ptr = ptr->left;
+			if(isLeaf(ptr))
+			{
+				outFile << ptr->chStr;
+				ptr = this->Root;
+			}
+		}
+		else if(charIn == '1')
+		{
+			ptr = ptr->right;
+			if(isLeaf(ptr))
+			{
+				outFile << ptr->chStr;
+				ptr = this->Root;
+			}
+		}
+		// Nothing here, but making sure the if statement is completed
+		else
+		{
+			continue;
+		}
+	}
 
+	// If tht file is not corrupted,
+	// The ptr should point to the Root as
+	// it finish the last bit of the file.
+	if(ptr != this->Root)
+	{
+		cout << "Error: the encode file is a corrupted file." << endl;
+		exit(0);	// File is corrupted, terminating the program
+	}
 
-
-
-
+	inFile.close();
+	outFile.close();
+}
 
 
 // Functions
@@ -213,11 +257,9 @@ void printAry(string Output_File_Name)
 		if(charCounts[i] > 0)
 		{
 			if(i == 10)
-				continue;
-//				outFile << "LF" << "\t" << charCounts[i] << endl;
+				outFile << "LF" << "\t" << charCounts[i] << endl;
 			else if(i == 13)
-				continue;
-//				outFile << "CR" << "\t" << charCounts[i] << endl;
+				outFile << "CR" << "\t" << charCounts[i] << endl;
 			else
 				outFile << (char)i << "\t" << charCounts[i] << endl;
 		}
@@ -240,8 +282,7 @@ void computeCount(string Input_File_Name)
 	while(inFile >> noskipws >> charIn)
 	{
 		index = (int)charIn;
-		if(index != 10 and index != 13)
-			charCounts[index]++;
+		charCounts[index]++;
 	}
 
 	inFile.close();
@@ -274,8 +315,26 @@ void getCode(treeNode *T, string code, string output_file_name)
 		char indexChar = (char)T->chStr.at(0);
 		charCode[(int)indexChar] = code;
 		// Writing <char code> pair to output file
-		string line = T->chStr + "\t" + T->code + "\n";
-		print_append(line, output_file_name);
+		// If it's not either new line or new paragraph, regular printing
+		if((int)indexChar != 10 and (int)indexChar != 13)
+		{
+			string line = T->chStr + "\t" + T->code + "\n";
+			print_append(line, output_file_name);
+		}
+		// Otherwise special printing
+		else
+		{
+			if((int)indexChar == 10)
+			{
+				string line = "LF\t" + T->code + "\n";
+				print_append(line, output_file_name);
+			}
+			else if((int)indexChar == 13)
+			{
+				string line = "CR\t" + T->code + "\n";
+				print_append(line, output_file_name);
+			}
+		}
 	}
 	else
 	{
@@ -304,14 +363,15 @@ void Encode(string input_file_name, string output_file_name)
 	inFile.open(input_file_name);
 	ofstream outFile(output_file_name);
 
-	while(inFile >> charIn)
+	while(inFile >> noskipws >> charIn)
 	{
 		index = (int)charIn;
 		if(index >= 0 and index <256)	// The ascii must be valid
 			if(charCounts[index] > 0)	// The character must have Huffman Code
-				if(index != 10 and index != 13)	// Avoiding special cases: LF and CR
-					code = charCode[index];
-					outFile << code;
+			{			
+				code = charCode[index];
+				outFile << code;
+			}
 	}
 	inFile.close();
 	outFile.close();
@@ -347,6 +407,8 @@ int main(int argc, char** argv)
 	string decode_file_name;
 	cout << "Please enter the file name which needs to be decoded:" << endl;
 	cin >> decode_file_name;
+	
+	T.Decode(decode_file_name, argv[5]);
 
 	return 0;
 }
